@@ -13,3 +13,55 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  password   String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  roles      UserRole[] @relation("UserToUserRole")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  userRoles   UserRole[]       @relation("RoleToUserRole")
+  permissions RolePermission[]
+}
+
+model Permission {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+  roles      RolePermission[]
+}
+
+model UserRole {
+  id         String   @id @default(cuid())
+  user_id    String
+  role_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation("UserToUserRole", fields: [user_id], references: [id])
+  role Role @relation("RoleToUserRole", fields: [role_id], references: [id])
+
+  @@unique([user_id, role_id])
+}
+
+model RolePermission {
+  id            String   @id @default(cuid())
+  role_id       String
+  permission_id String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  role       Role       @relation(fields: [role_id], references: [id])
+  permission Permission @relation(fields: [permission_id], references: [id])
+
+  @@unique([role_id, permission_id])
+}
